@@ -1,0 +1,16 @@
+{
+  "name": "sprint-boys-poker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Planning Poker online do time Sprint Boys (Projeto M2 - Métodos Ágeis)",
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.0"
+  }
+}

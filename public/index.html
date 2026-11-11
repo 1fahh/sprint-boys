@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprint Boys Poker</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <h1>Sprint Boys Poker</h1>
+
+  <section id="home" class="box">
+    <h2>Planning Poker do time</h2>
+    <label for="name" class="muted">Seu nome</label>
+    <input id="name" maxlength="20" autocomplete="nickname">
+    <div class="row">
+      <button class="btn" id="create">Criar sala</button>
+    </div>
+    <label for="code" class="muted">Ou entre numa sala com o código</label>
+    <div class="row">
+      <input id="code" maxlength="4" style="width:8em;text-transform:uppercase" placeholder="ABCD">
+      <button class="btn ghost" id="join">Entrar</button>
+    </div>
+    <div id="homeError" class="error" hidden></div>
+  </section>
+
+  <section id="room" hidden style="display:none;flex-direction:column;gap:16px">
+    <div class="box">
+      <div class="row" style="justify-content:space-between">
+        <div><div class="muted">Código da sala</div><div class="code" id="roomCode"></div></div>
+        <button class="btn ghost" id="leave">Sair</button>
+      </div>
+      <label for="story" class="muted">História em votação</label>
+      <div class="row">
+        <input id="story" maxlength="200" placeholder="Como time, quero..." style="flex:1;min-width:0">
+        <button class="btn ghost" id="saveStory">Salvar</button>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="muted" id="roundInfo"></div>
+      <div class="players" id="players"></div>
+    </div>
+
+    <div class="box">
+      <div class="muted">Sua carta</div>
+      <div class="hand" id="hand"></div>
+      <div class="row">
+        <button class="btn" id="reveal">Revelar votos</button>
+        <button class="btn ghost" id="reset">Nova rodada</button>
+      </div>
+    </div>
+
+    <div class="box" id="result" hidden></div>
+    <div id="roomError" class="error" hidden></div>
+  </section>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
