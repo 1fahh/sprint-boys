@@ -6,7 +6,9 @@ O time cria uma sala, passa o código de 4 letras, cada pessoa vota a estimativa
 
 ## Como funciona
 
-- `public/index.html`: a tela. Consulta o servidor a cada 2 segundos.
+- `public/index.html`: a estrutura da tela (HTML).
+- `public/style.css`: o visual (CSS).
+- `public/app.js`: a lógica da tela (JavaScript). Consulta o servidor a cada 2 segundos.
 - `api/room.js`: função serverless da Vercel. Todas as ações da sala passam por ela. O servidor só devolve os votos depois que a sala é revelada.
 - `lib/poker.js`: regras puras (validação, código da sala, resumo dos votos). É a parte coberta por testes.
 - `db/schema.sql`: as duas tabelas (`rooms` e `players`).
