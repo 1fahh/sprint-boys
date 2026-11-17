@@ -1,0 +1,12 @@
+# Configuração do Render (hospedagem gratuita). A DATABASE_URL é cadastrada no painel, nunca aqui.
+services:
+  - type: web
+    name: sprint-boys
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm test
+    startCommand: npm start
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false

@@ -10,6 +10,7 @@ O time cria uma sala, passa o código de 4 letras, cada pessoa vota a estimativa
 - `public/style.css`: o visual (CSS).
 - `public/app.js`: a lógica da tela (JavaScript). Consulta o servidor a cada 2 segundos.
 - `api/room.js`: função serverless da Vercel. Todas as ações da sala passam por ela. O servidor só devolve os votos depois que a sala é revelada.
+- `server.js`: servidor Node usado para hospedar fora da Vercel.
 - `lib/poker.js`: regras puras (validação, código da sala, resumo dos votos). É a parte coberta por testes.
 - `db/schema.sql`: as duas tabelas (`rooms` e `players`).
 - `test/poker.test.js`: testes com o `node:test`.
@@ -24,6 +25,16 @@ O time cria uma sala, passa o código de 4 letras, cada pessoa vota a estimativa
 Depois disso, cada commit na branch principal publica automaticamente (é o deploy automatizado pedido na disciplina).
 
 A build da Vercel roda `npm test` antes de publicar (veja `vercel.json`). Se algum teste falhar, a Vercel não publica essa versão. O GitHub Actions (`.github/workflows/ci.yml`) roda os mesmos testes a cada commit, desde que a conta do GitHub esteja liberada para usar o Actions.
+
+## Colocar no ar no Render (alternativa à Vercel)
+
+O arquivo `server.js` serve a pasta `public/` e a mesma API (`api/room.js`) num servidor Node simples.
+
+1. Crie uma conta em render.com e escolha **New > Web Service**, ligando o repositório do GitHub.
+2. Build command: `npm install && npm test`. Start command: `npm start`.
+3. Em Environment, crie `DATABASE_URL` com a connection string do Neon.
+
+Cada commit na `main` publica sozinho e os testes rodam antes. No plano gratuito o site "dorme" depois de um tempo sem uso e leva cerca de um minuto para acordar no primeiro acesso.
 
 ## Rodar na sua máquina
 
