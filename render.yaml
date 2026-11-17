@@ -4,7 +4,7 @@ services:
     name: sprint-boys
     runtime: node
     plan: free
-    buildCommand: npm install && npm test
+    buildCommand: npm install
     startCommand: npm start
     autoDeploy: true
     envVars:

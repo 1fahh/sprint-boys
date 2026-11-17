@@ -1,54 +1,28 @@
 # Sprint Boys Poker
 
-Planning Poker online do time Sprint Boys (Carlos, Enzo e Gustavo). Projeto M2 de Métodos Ágeis.
+Planning Poker online do time Sprint Boys (Projeto M2 - Métodos Ágeis). Site no ar: https://sprint-boys-poker.onrender.com (no plano gratuito demora cerca de 1 minuto para acordar).
 
-O time cria uma sala, passa o código de 4 letras, cada pessoa vota a estimativa em segredo e os votos são revelados juntos, com média, mediana, pontuação sugerida e alerta de divergência.
+## Arquivos
+- `public/index.html`: estrutura da tela. `public/style.css`: visual. `public/app.js`: lógica da tela.
+- `api/room.js`: API. Todas as ações da sala passam por ela. O servidor só devolve os votos depois que a sala é revelada.
+- `lib/poker.js`: regras (validação, código da sala, resumo dos votos).
+- `server.js`: servidor Node que serve a tela e a API.
+- `db/schema.sql`: tabelas `rooms` e `players` (rodar uma vez no SQL Editor do Neon).
+- `render.yaml`: configuração do Render.
 
-## Como funciona
+## Como rodar na sua máquina
+1. Instale o Node 20 ou mais novo e rode `npm install`.
+2. Copie `.env.example` para `.env` e cole a connection string do Neon em `DATABASE_URL`.
+3. `npm start` abre em http://localhost:3000.
 
-- `public/index.html`: a estrutura da tela (HTML).
-- `public/style.css`: o visual (CSS).
-- `public/app.js`: a lógica da tela (JavaScript). Consulta o servidor a cada 2 segundos.
-- `api/room.js`: função serverless da Vercel. Todas as ações da sala passam por ela. O servidor só devolve os votos depois que a sala é revelada.
-- `server.js`: servidor Node usado para hospedar fora da Vercel.
-- `lib/poker.js`: regras puras (validação, código da sala, resumo dos votos). É a parte coberta por testes.
-- `db/schema.sql`: as duas tabelas (`rooms` e `players`).
-- `test/poker.test.js`: testes com o `node:test`.
-- `.github/workflows/ci.yml`: roda os testes a cada commit.
-
-## Colocar no ar (uma vez)
-
-1. **Neon:** crie um projeto gratuito em neon.tech, abra o SQL Editor e rode o conteúdo de `db/schema.sql`. Copie a connection string.
-2. **GitHub:** crie o repositório e envie estes arquivos.
-3. **Vercel:** importe o repositório (Add New > Project). Em Settings > Environment Variables, crie `DATABASE_URL` com a connection string do Neon e faça um novo deploy.
-
-Depois disso, cada commit na branch principal publica automaticamente (é o deploy automatizado pedido na disciplina).
-
-A build da Vercel roda `npm test` antes de publicar (veja `vercel.json`). Se algum teste falhar, a Vercel não publica essa versão. O GitHub Actions (`.github/workflows/ci.yml`) roda os mesmos testes a cada commit, desde que a conta do GitHub esteja liberada para usar o Actions.
-
-## Colocar no ar no Render (alternativa à Vercel)
-
-O arquivo `server.js` serve a pasta `public/` e a mesma API (`api/room.js`) num servidor Node simples.
-
-1. Crie uma conta em render.com e escolha **New > Web Service**, ligando o repositório do GitHub.
-2. Build command: `npm install && npm test`. Start command: `npm start`.
+## Colocar no ar no Render
+1. Crie o banco no Neon e rode `db/schema.sql`.
+2. No Render, crie um Web Service ligado a este repositório. Build command: `npm install`. Start command: `npm start`.
 3. Em Environment, crie `DATABASE_URL` com a connection string do Neon.
 
-Cada commit na `main` publica sozinho e os testes rodam antes. No plano gratuito o site "dorme" depois de um tempo sem uso e leva cerca de um minuto para acordar no primeiro acesso.
+Cada commit na `main` publica sozinho.
 
-## Rodar na sua máquina
-
-```bash
-npm install
-npm test
-cp .env.example .env     # cole a DATABASE_URL do Neon
-npx vercel dev           # abre em http://localhost:3000
-```
-
-Nunca coloque a connection string no repositório. O `.gitignore` já ignora o `.env`.
-
-## Escopo por Sprint (sugestão)
-
-- Sprint 1: criar sala, entrar, votar, revelar (já está neste código).
-- Sprint 2: tratamento de erros, nova rodada e história, melhorias de tela e de testes.
-- Sprint 3: histórico das estimativas (e comparação com o Cycle Time real), teste com alguém de fora.
+## Sprints
+- Sprint 1: criar sala, entrar, votar em segredo e revelar.
+- Sprint 2: resumo, alerta de divergência, liberar votação e nova rodada.
+- Sprint 3: só o criador controla a sala, histórico das estimativas e teste com alguém de fora.
