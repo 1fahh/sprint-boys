@@ -46,7 +46,14 @@
     try {
       draw(await call('GET', null, me.code));
       show($('#roomError'), '');
-    } catch (e) { show($('#roomError'), e.message); }
+    } catch (e) {
+      if (/não encontrada/i.test(e.message)) {
+        leave();
+        show($('#homeError'), 'Essa sala não existe mais. Crie uma nova ou confira o código.');
+        return;
+      }
+      show($('#roomError'), e.message);
+    }
   }
 
   function draw(s) {
@@ -69,13 +76,24 @@
     hand.textContent = '';
     FIB.forEach(function (v) {
       var b = document.createElement('button');
-      b.className = 'pick'; b.textContent = v; b.disabled = s.revealed;
+      b.className = 'pick'; b.textContent = v; b.disabled = s.revealed || !s.open;
       b.setAttribute('aria-pressed', me.vote === v ? 'true' : 'false');
       b.onclick = function () { vote(v); };
       hand.appendChild(b);
     });
 
-    $('#reveal').disabled = s.revealed || !s.players.some(function (p) { return p.voted; });
+    var anyVote = s.players.some(function (p) { return p.voted; });
+    var isFacilitator = !s.creator || s.creator.toLowerCase() === me.name.toLowerCase();
+    $('#release').hidden = s.open || s.revealed || !isFacilitator;
+    $('#reveal').disabled = s.revealed || !s.open || !anyVote;
+    var hint = $('#voteHint');
+    hint.hidden = false;
+    if (s.revealed) hint.textContent = 'Votos revelados. Comece uma nova rodada para votar de novo.';
+    else if (!s.open) hint.textContent = isFacilitator
+      ? 'Votação bloqueada. Explique a história e clique em "Liberar votação".'
+      : 'Aguardando o facilitador liberar a votação.';
+    else if (!anyVote) hint.textContent = 'Votação liberada. Escolha uma carta; só dá para revelar depois do primeiro voto.';
+    else hint.hidden = true;
 
     var box = $('#result');
     if (!s.revealed || !s.summary) { box.hidden = true; return; }
@@ -131,8 +149,9 @@
     catch (e) { show($('#homeError'), e.message); }
   };
   $('#leave').onclick = leave;
+  $('#release').onclick = function () { act('release', { name: me.name }); };
   $('#reveal').onclick = function () { act('reveal'); };
-  $('#reset').onclick = function () { me.vote = null; act('reset'); };
+  $('#reset').onclick = function () { me.vote = null; editingStory = false; act('reset', { story: $('#story').value }); };
   $('#saveStory').onclick = function () { editingStory = false; act('story', { story: $('#story').value }); };
   $('#story').oninput = function () { editingStory = true; };
 
@@ -140,6 +159,6 @@
   var saved = load('poker-code');
   if (saved && $('#name').value) {
     me.name = $('#name').value;
-    call('POST', { action: 'join', code: saved, name: me.name }).then(enterRoom).catch(function () { store('poker-code', ''); });
+    call('POST', { action: 'join', code: saved, name: me.name, rejoin: true }).then(enterRoom).catch(function () { store('poker-code', ''); });
   }
 })();
