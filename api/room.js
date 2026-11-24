@@ -1,6 +1,6 @@
 // Função serverless da Vercel: uma única rota /api/room.
 //   GET  /api/room?code=ABCD          -> estado da sala
-//   POST /api/room  { action, ... }   -> create | join | vote | reveal | reset | story
+//   POST /api/room  { action, ... }   -> create | join | vote | release | reveal | reset | story
 //
 // Os votos só saem do servidor depois que a sala é revelada.
 
@@ -22,7 +22,7 @@ function getDb() {
 }
 
 async function loadState(sql, code) {
-  const rooms = await sql`select code, story, revealed, round from rooms where code = ${code}`;
+  const rooms = await sql`select code, story, revealed, round, open, creator from rooms where code = ${code}`;
   if (rooms.length === 0) return null;
   const room = rooms[0];
   const players = await sql`
@@ -33,6 +33,8 @@ async function loadState(sql, code) {
     story: room.story,
     revealed: room.revealed,
     round: room.round,
+    open: room.open,
+    creator: room.creator,
     players: players.map((p) => ({
       name: p.name,
       voted: p.vote !== null,
@@ -55,7 +57,7 @@ function cleanStory(value) {
 }
 
 async function requireRoom(sql, code) {
-  const rows = await sql`select code, revealed from rooms where code = ${code}`;
+  const rows = await sql`select code, revealed, open, creator from rooms where code = ${code}`;
   if (rows.length === 0) throw new HttpError(404, 'Sala não encontrada. Confira o código.');
   return rows[0];
 }
@@ -69,7 +71,7 @@ async function handlePost(sql, body) {
     for (let i = 0; i < 8 && !code; i++) {
       const candidate = makeCode();
       const inserted = await sql`
-        insert into rooms (code, story) values (${candidate}, ${cleanStory(body.story)})
+        insert into rooms (code, story, creator) values (${candidate}, ${cleanStory(body.story)}, ${name})
         on conflict do nothing returning code`;
       if (inserted.length) code = candidate;
     }
@@ -83,22 +85,40 @@ async function handlePost(sql, body) {
 
   if (action === 'join') {
     const name = cleanName(body.name);
-    await sql`
-      insert into players (room_code, name) values (${code}, ${name})
-      on conflict do nothing`;
+    const existing = await sql`
+      select name from players
+      where room_code = ${code} and lower(name) = lower(${name})`;
+    if (existing.length > 0) {
+      // Nome repetido: só volta quem está reconectando (recarregou a página); entrada nova é recusada.
+      if (!body.rejoin) throw new HttpError(409, 'Esse nome já está na sala. Escolha outro nome.');
+    } else {
+      await sql`insert into players (room_code, name) values (${code}, ${name})`;
+    }
   } else if (action === 'vote') {
     const name = cleanName(body.name);
     if (!isValidVote(body.value)) throw new HttpError(400, 'Carta inválida.');
     if (room.revealed) throw new HttpError(409, 'Os votos já foram revelados. Comece uma nova rodada.');
+    if (!room.open) throw new HttpError(409, 'A votação ainda não foi liberada. Aguarde a explicação da história.');
     const updated = await sql`
       update players set vote = ${body.value}
       where room_code = ${code} and name = ${name} returning name`;
     if (updated.length === 0) throw new HttpError(404, 'Você ainda não entrou nesta sala.');
+  } else if (action === 'release') {
+    const name = cleanName(body.name);
+    // Salas antigas não têm criador gravado; nelas qualquer jogador libera.
+    if (room.creator && room.creator.toLowerCase() !== name.toLowerCase()) {
+      throw new HttpError(403, 'Só o facilitador (quem criou a sala) pode liberar a votação.');
+    }
+    if (room.revealed) throw new HttpError(409, 'Os votos já foram revelados. Comece uma nova rodada.');
+    await sql`update rooms set open = true where code = ${code}`;
   } else if (action === 'reveal') {
+    const voted = await sql`
+      select count(*)::int as n from players where room_code = ${code} and vote is not null`;
+    if (voted[0].n === 0) throw new HttpError(409, 'Ninguém votou ainda. Libere a votação e espere pelo menos um voto.');
     await sql`update rooms set revealed = true where code = ${code}`;
   } else if (action === 'reset') {
     await sql`update players set vote = null where room_code = ${code}`;
-    await sql`update rooms set revealed = false, round = round + 1 where code = ${code}`;
+    await sql`update rooms set revealed = false, open = false, round = round + 1 where code = ${code}`;
     if (body.story !== undefined) {
       await sql`update rooms set story = ${cleanStory(body.story)} where code = ${code}`;
     }

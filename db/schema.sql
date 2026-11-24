@@ -5,6 +5,8 @@ create table if not exists rooms (
   story      text not null default '',
   revealed   boolean not null default false,
   round      integer not null default 1,
+  open       boolean not null default false,
+  creator    text,
   created_at timestamptz not null default now()
 );
 
