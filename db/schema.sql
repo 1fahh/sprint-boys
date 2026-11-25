@@ -17,3 +17,13 @@ create table if not exists players (
   joined_at timestamptz not null default now(),
   primary key (room_code, name)
 );
+
+-- Sprint 3 (história 10): histórico das estimativas confirmadas pelo facilitador.
+create table if not exists history (
+  room_code text not null references rooms(code) on delete cascade,
+  round     integer not null,
+  story     text not null default '',
+  points    integer not null,
+  created_at timestamptz not null default now(),
+  primary key (room_code, round)
+);

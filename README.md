@@ -7,7 +7,7 @@ Planning Poker online do time Sprint Boys (Projeto M2 - Métodos Ágeis). Site n
 - `api/room.js`: API. Todas as ações da sala passam por ela. O servidor só devolve os votos depois que a sala é revelada.
 - `lib/poker.js`: regras (validação, código da sala, resumo dos votos).
 - `server.js`: servidor Node que serve a tela e a API.
-- `db/schema.sql`: tabelas `rooms` e `players` (rodar uma vez no SQL Editor do Neon).
+- `db/schema.sql`: tabelas `rooms`, `players` e `history` (rodar uma vez no SQL Editor do Neon). Em banco já criado, rodar `db/migracao-sprint-2.sql` e `db/migracao-sprint-3.sql`.
 - `render.yaml`: configuração do Render.
 
 ## Como rodar na sua máquina

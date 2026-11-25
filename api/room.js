@@ -1,11 +1,12 @@
-// Função serverless da Vercel: uma única rota /api/room.
+// Rota única /api/room (servida pelo server.js no Render).
 //   GET  /api/room?code=ABCD          -> estado da sala
-//   POST /api/room  { action, ... }   -> create | join | vote | release | reveal | reset | story
+//   POST /api/room  { action, ... }   -> create | join | vote | release | reveal | reset | confirm | story
 //
 // Os votos só saem do servidor depois que a sala é revelada.
+// Liberar, revelar, nova rodada e confirmar pontos são ações do criador da sala (história 9).
 
 import { neon } from '@neondatabase/serverless';
-import { isValidVote, isValidName, makeCode, normalizeCode, summarize } from '../lib/poker.js';
+import { isValidVote, isValidName, isValidPoints, makeCode, normalizeCode, summarize } from '../lib/poker.js';
 
 class HttpError extends Error {
   constructor(status, message) {
@@ -44,6 +45,9 @@ async function loadState(sql, code) {
   if (room.revealed) {
     state.summary = summarize(players.map((p) => p.vote).filter((v) => v !== null));
   }
+  const history = await sql`
+    select round, story, points from history where room_code = ${code} order by round`;
+  state.history = history.map((h) => ({ round: h.round, story: h.story, points: h.points }));
   return state;
 }
 
@@ -60,6 +64,15 @@ async function requireRoom(sql, code) {
   const rows = await sql`select code, revealed, open, creator from rooms where code = ${code}`;
   if (rows.length === 0) throw new HttpError(404, 'Sala não encontrada. Confira o código.');
   return rows[0];
+}
+
+// História 9: só o criador da sala controla a rodada.
+// Salas antigas não têm criador gravado; nelas qualquer jogador continua podendo agir.
+function requireCreator(room, body, acao) {
+  const name = cleanName(body.name);
+  if (room.creator && room.creator.toLowerCase() !== name.toLowerCase()) {
+    throw new HttpError(403, `Só o facilitador (quem criou a sala) pode ${acao}.`);
+  }
 }
 
 async function handlePost(sql, body) {
@@ -101,27 +114,36 @@ async function handlePost(sql, body) {
     if (!room.open) throw new HttpError(409, 'A votação ainda não foi liberada. Aguarde a explicação da história.');
     const updated = await sql`
       update players set vote = ${body.value}
-      where room_code = ${code} and name = ${name} returning name`;
+      where room_code = ${code} and lower(name) = lower(${name}) returning name`;
     if (updated.length === 0) throw new HttpError(404, 'Você ainda não entrou nesta sala.');
   } else if (action === 'release') {
-    const name = cleanName(body.name);
-    // Salas antigas não têm criador gravado; nelas qualquer jogador libera.
-    if (room.creator && room.creator.toLowerCase() !== name.toLowerCase()) {
-      throw new HttpError(403, 'Só o facilitador (quem criou a sala) pode liberar a votação.');
-    }
+    requireCreator(room, body, 'liberar a votação');
     if (room.revealed) throw new HttpError(409, 'Os votos já foram revelados. Comece uma nova rodada.');
     await sql`update rooms set open = true where code = ${code}`;
   } else if (action === 'reveal') {
+    requireCreator(room, body, 'revelar os votos');
     const voted = await sql`
       select count(*)::int as n from players where room_code = ${code} and vote is not null`;
     if (voted[0].n === 0) throw new HttpError(409, 'Ninguém votou ainda. Libere a votação e espere pelo menos um voto.');
     await sql`update rooms set revealed = true where code = ${code}`;
   } else if (action === 'reset') {
+    requireCreator(room, body, 'abrir uma nova rodada');
     await sql`update players set vote = null where room_code = ${code}`;
     await sql`update rooms set revealed = false, open = false, round = round + 1 where code = ${code}`;
     if (body.story !== undefined) {
       await sql`update rooms set story = ${cleanStory(body.story)} where code = ${code}`;
     }
+  } else if (action === 'confirm') {
+    // História 10: ao fechar a rodada, o facilitador confirma os pontos finais e eles entram no histórico.
+    requireCreator(room, body, 'confirmar os pontos finais');
+    if (!room.revealed) throw new HttpError(409, 'Revele os votos antes de confirmar os pontos finais.');
+    if (!isValidPoints(body.points)) throw new HttpError(400, 'Escolha pontos finais entre 1, 2, 3, 5, 8, 13 ou 21.');
+    const rooms = await sql`select story, round from rooms where code = ${code}`;
+    // Confirmar de novo na mesma rodada corrige o valor, sem duplicar a linha.
+    await sql`
+      insert into history (room_code, round, story, points)
+      values (${code}, ${rooms[0].round}, ${rooms[0].story}, ${Number(body.points)})
+      on conflict (room_code, round) do update set story = excluded.story, points = excluded.points`;
   } else if (action === 'story') {
     await sql`update rooms set story = ${cleanStory(body.story)} where code = ${code}`;
   } else {

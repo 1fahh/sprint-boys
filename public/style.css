@@ -7,6 +7,7 @@
     --accent: #4FC3AC; --accent-fg: #06221C; --accent-soft: #1B3A33; --warn: #F29A63; --warn-bg: #3A2417; color-scheme: dark; }
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif; padding: 20px max(16px, env(safe-area-inset-left, 0px)) 48px; }
 .wrap { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
 h1 { font-size: 26px; margin: 0; }
@@ -33,3 +34,10 @@ input { font: inherit; color: var(--fg); background: var(--bg); border: 1px soli
 .big { font-size: 34px; font-weight: 700; line-height: 1.1; }
 .flag { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 10px 12px; font-weight: 500; }
 .ok { background: var(--accent-soft); color: var(--accent); border-radius: 8px; padding: 10px 12px; font-weight: 500; }
+
+.final { display: flex; flex-wrap: wrap; gap: 6px; }
+.final .pick { width: 44px; height: 44px; font-size: 16px; }
+.hist { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.hist li { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+.hist li:last-child { border-bottom: 0; padding-bottom: 0; }
+.hist .pts { font-weight: 700; white-space: nowrap; }
