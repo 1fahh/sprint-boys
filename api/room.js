@@ -145,6 +145,7 @@ async function handlePost(sql, body) {
       values (${code}, ${rooms[0].round}, ${rooms[0].story}, ${Number(body.points)})
       on conflict (room_code, round) do update set story = excluded.story, points = excluded.points`;
   } else if (action === 'story') {
+    requireCreator(room, body, 'editar a história');
     await sql`update rooms set story = ${cleanStory(body.story)} where code = ${code}`;
   } else {
     throw new HttpError(400, 'Ação desconhecida.');
