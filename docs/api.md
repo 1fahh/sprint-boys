@@ -17,7 +17,7 @@ Corpo em JSON com o campo `action`:
 | reveal | `code`, `name` | **Sprint 3 (#9).** Só o criador revela todos os votos; calcula o resumo | 403 quem pede não é o criador; 400 sem nome; 409 se ninguém votou ainda |
 | reset | `code`, `name`, `story` (opcional) | **Sprint 3 (#9).** Só o criador abre nova rodada: apaga os votos, esconde os valores, **bloqueia a votação de novo**, soma 1 à rodada e troca a história se `story` vier. O histórico não é apagado | 403 quem pede não é o criador; 400 sem nome; 404 sala não encontrada |
 | confirm | `code`, `name`, `points` (1, 2, 3, 5, 8, 13 ou 21) | **Sprint 3 (#10).** Só o criador confirma os pontos finais da rodada depois de revelar; grava no histórico (rodada, história, pontos). Confirmar de novo na mesma rodada corrige o valor | 403 quem pede não é o criador; 409 votos ainda não revelados; 400 pontos fora da escala |
-| story | `code`, `story` | Define a história da rodada (até 200 caracteres) | 404 sala não encontrada |
+| story | `code`, `name`, `story` | Só o criador define a história da rodada (até 200 caracteres). Em salas antigas, sem criador, qualquer um pode | 403 quem pede não é o criador; 400 sem nome; 404 sala não encontrada |
 
 ## Estado da sala (resposta)
 ```json

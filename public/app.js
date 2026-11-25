@@ -85,6 +85,8 @@
 
     var anyVote = s.players.some(function (p) { return p.voted; });
     var isFacilitator = !s.creator || s.creator.toLowerCase() === me.name.toLowerCase();
+    $('#story').readOnly = !isFacilitator;
+    $('#saveStory').hidden = !isFacilitator;
     // História 9: só o criador da sala vê e usa liberar, revelar e nova rodada.
     $('#release').hidden = s.open || s.revealed || !isFacilitator;
     $('#reveal').hidden = !isFacilitator;
@@ -209,7 +211,7 @@
   $('#release').onclick = function () { act('release', { name: me.name }); };
   $('#reveal').onclick = function () { act('reveal', { name: me.name }); };
   $('#reset').onclick = function () { me.vote = null; editingStory = false; act('reset', { name: me.name, story: $('#story').value }); };
-  $('#saveStory').onclick = function () { editingStory = false; act('story', { story: $('#story').value }); };
+  $('#saveStory').onclick = function () { editingStory = false; act('story', { name: me.name, story: $('#story').value }); };
   $('#story').oninput = function () { editingStory = true; };
 
   $('#name').value = load('poker-name');
